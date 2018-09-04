@@ -26,3 +26,4 @@ deps/lua/src/liblua.a
 .make-*
 .prerequisites
 *.dSYM
+.vscode/*

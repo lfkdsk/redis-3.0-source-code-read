@@ -31,24 +31,41 @@
 #ifndef __SDS_H
 #define __SDS_H
 
+// 最大的预分配长度
 #define SDS_MAX_PREALLOC (1024*1024)
 
 #include <sys/types.h>
 #include <stdarg.h>
 
+// 实际字符串的指针 buf[] 类型别名，指向sdshdr结构体中的buf属性
 typedef char *sds;
 
+/**
+ * redis 实现的动态 strings 库: SDS
+ **/
 struct sdshdr {
+    // 已经使用的 string 长度
     unsigned int len;
+    // 剩余的扩容长度
     unsigned int free;
+    // 真实保存 char[] 和二进制安全数据的位置
     char buf[];
 };
 
+/**
+ * 求使用长度
+ * 求 sdshdr 的长度，这里是用 buf 的开始地址减掉偏移地址转换成 struct 类型
+ * 此处 sdshdr 中的 buf 不占 size 位置一次可以通过这种方式获取偏移量
+ * **/
 static inline size_t sdslen(const sds s) {
     struct sdshdr *sh = (void*)(s-(sizeof(struct sdshdr)));
     return sh->len;
 }
 
+/**
+ * 剩余可拓展空间
+ * sdshdr 中的 free 字段
+ * **/
 static inline size_t sdsavail(const sds s) {
     struct sdshdr *sh = (void*)(s-(sizeof(struct sdshdr)));
     return sh->free;

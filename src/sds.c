@@ -36,6 +36,14 @@
 #include "sds.h"
 #include "zmalloc.h"
 
+/**
+ * 创建并初始化一定的长度 sdsnewlen
+ * 
+ * *init 初始化的字符串指针
+ * initlen 初始化的字符串长度
+ * 
+ * T = O(N).
+ */
 /* Create a new sds string with the content specified by the 'init' pointer
  * and 'initlen'.
  * If NULL is used for 'init' the string is initialized with zero bytes.
@@ -65,29 +73,42 @@ sds sdsnewlen(const void *init, size_t initlen) {
     return (char*)sh->buf;
 }
 
+// 创建空的字符串
 /* Create an empty (zero length) sds string. Even in this case the string
  * always has an implicit null term. */
 sds sdsempty(void) {
     return sdsnewlen("",0);
 }
 
+// 创建字符串的包装函数
 /* Create a new sds string starting from a null terminated C string. */
 sds sdsnew(const char *init) {
     size_t initlen = (init == NULL) ? 0 : strlen(init);
     return sdsnewlen(init, initlen);
 }
 
+// 拷贝一份字符串对象，sds 是个 char* 这里直接插进去就能直接复制了
 /* Duplicate an sds string. */
 sds sdsdup(const sds s) {
     return sdsnewlen(s, sdslen(s));
 }
 
+/* 
+ * 释放 sds 
+ * 
+ * T = O(n)
+ */
 /* Free an sds string. No operation is performed if 's' is NULL. */
 void sdsfree(sds s) {
     if (s == NULL) return;
     zfree(s-sizeof(struct sdshdr));
 }
 
+/**
+ * 更新 sds 的 free 和 len 字段，重新计算 sds 的 char[] 的长度
+ * sds.h 里面一些东西的设计就是为了能使用 string.h 之中的函数。
+ * 但是在实际之中这个函数没有被用过，可能被废除
+*/
 /* Set the sds string length to the length as obtained with strlen(), so
  * considering as content only up to the first null term character.
  *
@@ -108,7 +129,7 @@ void sdsupdatelen(sds s) {
     sh->free += (sh->len-reallen);
     sh->len = reallen;
 }
-
+/* sds 的 clear 方法，置空 */
 /* Modify an sds string in-place to make it empty (zero length).
  * However all the existing buffer is not discarded but set as free space
  * so that next append operations will not require allocations up to the
@@ -117,9 +138,14 @@ void sdsclear(sds s) {
     struct sdshdr *sh = (void*) (s-(sizeof(struct sdshdr)));
     sh->free += sh->len;
     sh->len = 0;
+    // 0 位置 \0 
+    // 惰性删除整个字符串
     sh->buf[0] = '\0';
 }
 
+/**
+ * SDS 申请开具
+*/
 /* Enlarge the free space at the end of the sds string so that the caller
  * is sure that after calling this function can overwrite up to addlen
  * bytes after the end of the string, plus one more byte for nul term.
