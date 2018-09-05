@@ -44,14 +44,21 @@
 /* Unused arguments generate annoying warnings... */
 #define DICT_NOTUSED(V) ((void) V)
 
+/**
+ * Dict Entry 
+ * 字典的每一个 item 的字段
+*/
 typedef struct dictEntry {
+    // 键
     void *key;
+    // 值
     union {
         void *val;
         uint64_t u64;
         int64_t s64;
         double d;
     } v;
+    // 指向的下一个 item 形成链表
     struct dictEntry *next;
 } dictEntry;
 
@@ -66,16 +73,23 @@ typedef struct dictType {
 
 /* This is our hash table structure. Every dictionary has two of this as we
  * implement incremental rehashing, for the old to the new table. */
+/**
+ * 字典的实现字段
+*/
 typedef struct dictht {
+    // hash table
     dictEntry **table;
     unsigned long size;
+    // sizmmask = size - 1 (取模的掩码)
     unsigned long sizemask;
+    // used size.
     unsigned long used;
 } dictht;
 
 typedef struct dict {
     dictType *type;
     void *privdata;
+    // hash table
     dictht ht[2];
     long rehashidx; /* rehashing not in progress if rehashidx == -1 */
     int iterators; /* number of iterators currently running */
