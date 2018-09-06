@@ -87,11 +87,15 @@ typedef struct dictht {
 } dictht;
 
 typedef struct dict {
+    // 类型特定函数
     dictType *type;
+    // 私有数据
     void *privdata;
     // hash table
     dictht ht[2];
+    // rehash 的 index， -1 的时候是没进行 rehash 
     long rehashidx; /* rehashing not in progress if rehashidx == -1 */
+    // 安全迭代器
     int iterators; /* number of iterators currently running */
 } dict;
 
