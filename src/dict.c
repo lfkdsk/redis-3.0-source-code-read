@@ -99,6 +99,7 @@ uint32_t dictGetHashFunctionSeed(void) {
  * 1. It will not work incrementally.
  * 2. It will not produce the same results on little-endian and big-endian
  *    machines.
+ * murmur 的 hash 算法
  */
 unsigned int dictGenHashFunction(const void *key, int len) {
     /* 'm' and 'r' are mixing constants generated offline.
@@ -156,6 +157,8 @@ unsigned int dictGenCaseHashFunction(const unsigned char *buf, int len) {
 
 /* Reset a hash table already initialized with ht_init().
  * NOTE: This function should only be called by ht_destroy(). */
+
+// 一些初始化
 static void _dictReset(dictht *ht)
 {
     ht->table = NULL;
@@ -175,6 +178,7 @@ dict *dictCreate(dictType *type,
 }
 
 /* Initialize the hash table */
+// 初始化 hash
 int _dictInit(dict *d, dictType *type,
         void *privDataPtr)
 {
@@ -189,6 +193,7 @@ int _dictInit(dict *d, dictType *type,
 
 /* Resize the table to the minimal size that contains all the elements,
  * but with the invariant of a USED/BUCKETS ratio near to <= 1 */
+ // 缩小 dict 的大小使使用率接近小于等于 1
 int dictResize(dict *d)
 {
     int minimal;
@@ -201,13 +206,16 @@ int dictResize(dict *d)
 }
 
 /* Expand or create the hash table */
+// 字典扩容
 int dictExpand(dict *d, unsigned long size)
 {
     dictht n; /* the new hash table */
+    // 用 2 的幂函数确定下一个大小
     unsigned long realsize = _dictNextPower(size);
 
     /* the size is invalid if it is smaller than the number of
      * elements already inside the hash table */
+    // 正在扩容 或者 size 不够大
     if (dictIsRehashing(d) || d->ht[0].used > size)
         return DICT_ERR;
 
@@ -222,12 +230,14 @@ int dictExpand(dict *d, unsigned long size)
 
     /* Is this the first initialization? If so it's not really a rehashing
      * we just set the first hash table so that it can accept keys. */
+    // 如果 0 未被初始化，这次扩容执行一次初始化
     if (d->ht[0].table == NULL) {
         d->ht[0] = n;
         return DICT_OK;
     }
 
     /* Prepare a second hash table for incremental rehashing */
+    // 如果 0 已经被扩容了，就开始一次新的 rehash
     d->ht[1] = n;
     d->rehashidx = 0;
     return DICT_OK;
@@ -242,6 +252,9 @@ int dictExpand(dict *d, unsigned long size)
  * guaranteed that this function will rehash even a single bucket, since it
  * will visit at max N*10 empty buckets in total, otherwise the amount of
  * work it does would be unbound and the function may block for a long time. */
+/** n-steps 的渐进式 rehash 
+ * 每次的移动以 bucket 为单位而不是 node.
+ **/
 int dictRehash(dict *d, int n) {
     int empty_visits = n*10; /* Max number of empty buckets to visit. */
     if (!dictIsRehashing(d)) return 0;
@@ -252,12 +265,15 @@ int dictRehash(dict *d, int n) {
         /* Note that rehashidx can't overflow as we are sure there are more
          * elements because ht[0].used != 0 */
         assert(d->ht[0].size > (unsigned long)d->rehashidx);
+        // 寻找下一个非空的索引
         while(d->ht[0].table[d->rehashidx] == NULL) {
             d->rehashidx++;
             if (--empty_visits == 0) return 1;
         }
+        // find it!
         de = d->ht[0].table[d->rehashidx];
         /* Move all the keys in this bucket from the old to the new hash HT */
+        // bucket 里面对每一个节点进行处理，更新参数。
         while(de) {
             unsigned int h;
 
@@ -275,6 +291,7 @@ int dictRehash(dict *d, int n) {
     }
 
     /* Check if we already rehashed the whole table... */
+    // 查找是否成功的进行了 rehash
     if (d->ht[0].used == 0) {
         zfree(d->ht[0].table);
         d->ht[0] = d->ht[1];
@@ -295,6 +312,7 @@ long long timeInMilliseconds(void) {
 }
 
 /* Rehash for an amount of time between ms milliseconds and ms+1 milliseconds */
+// 给定的时间段内进行 rehash
 int dictRehashMilliseconds(dict *d, int ms) {
     long long start = timeInMilliseconds();
     int rehashes = 0;
@@ -315,6 +333,7 @@ int dictRehashMilliseconds(dict *d, int ms) {
  * dictionary so that the hash table automatically migrates from H1 to H2
  * while it is actively used. */
 static void _dictRehashStep(dict *d) {
+    // 检查没有 iterators 的话就进行逐步的 rehash
     if (d->iterators == 0) dictRehash(d,1);
 }
 

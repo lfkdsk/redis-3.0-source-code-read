@@ -62,12 +62,21 @@ typedef struct dictEntry {
     struct dictEntry *next;
 } dictEntry;
 
+/**
+ * Dict Type 的类型特定函数
+*/
 typedef struct dictType {
+    // 生成 hash 的函数
     unsigned int (*hashFunction)(const void *key);
+    // 复制 key
     void *(*keyDup)(void *privdata, const void *key);
+    // 复制 value
     void *(*valDup)(void *privdata, const void *obj);
+    // key 对比
     int (*keyCompare)(void *privdata, const void *key1, const void *key2);
+    // key 的析构器
     void (*keyDestructor)(void *privdata, void *key);
+    // value 的析构器
     void (*valDestructor)(void *privdata, void *obj);
 } dictType;
 
@@ -89,9 +98,9 @@ typedef struct dictht {
 typedef struct dict {
     // 类型特定函数
     dictType *type;
-    // 私有数据
+    // 私有数据 (可选参数 暂时还不明确)
     void *privdata;
-    // hash table
+    // hash table 使用两个 dict 能够实现渐进性的 rehash
     dictht ht[2];
     // rehash 的 index， -1 的时候是没进行 rehash 
     long rehashidx; /* rehashing not in progress if rehashidx == -1 */
@@ -104,9 +113,13 @@ typedef struct dict {
  * iterating. Otherwise it is a non safe iterator, and only dictNext()
  * should be called while iterating. */
 typedef struct dictIterator {
+    // 迭代
     dict *d;
+    // index
     long index;
+    // safe 等于 1 的时候是安全迭代器能够操作修改方法，其余的情况则只能调用 dictNext() 方法进行
     int table, safe;
+    // 用来防止在地带过程之中 item 被 remove
     dictEntry *entry, *nextEntry;
     /* unsafe iterator fingerprint for misuse detection. */
     long long fingerprint;
@@ -115,6 +128,7 @@ typedef struct dictIterator {
 typedef void (dictScanFunction)(void *privdata, const dictEntry *de);
 
 /* This is the initial size of every hash table */
+// 哈希表的初始大小
 #define DICT_HT_INITIAL_SIZE     4
 
 /* ------------------------------- Macros ------------------------------------*/
