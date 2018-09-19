@@ -32,9 +32,21 @@
 #define __INTSET_H
 #include <stdint.h>
 
+// 整数集合
+/**
+ * 整数[] 有一个升级的逻辑，比如一个 int8_t[] 里面插入一个 int16_t 整个数组都会
+ * 被切换为 int16_t[] 
+*/
 typedef struct intset {
+    // 编码
     uint32_t encoding;
+    // 元素数量
     uint32_t length;
+    // 元素 
+    /**
+     * 这里虽然使用 int8_t 进行保存但是不只是存 int8_t 类型的值
+     * 根据 encoding 的值决定存储内容。
+    */
     int8_t contents[];
 } intset;
 
