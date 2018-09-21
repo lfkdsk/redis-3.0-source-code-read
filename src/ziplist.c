@@ -1,11 +1,21 @@
 /* The ziplist is a specially encoded dually linked list that is designed
- * to be very memory efficient. It stores both strings and integer values,
- * where integers are encoded as actual integers instead of a series of
- * characters. It allows push and pop operations on either side of the list
- * in O(1) time. However, because every operation requires a reallocation of
+ * to be very memory efficient. 
+ * 
+ * 双端链表 能够节省内存效率
+ * 
+ * It stores both strings and integer values, where integers are encoded as actual integers instead of a series of
+ * characters. 
+ * 
+ * ziplist 能保存 string 和 integer 整型值，保存的整型值不会被保存为字符串数组
+ * 
+ * It allows push and pop operations on either side of the list
+ * in O(1) time. 
+ * 
+ * However, because every operation requires a reallocation of
  * the memory used by the ziplist, the actual complexity is related to the
  * amount of memory used by the ziplist.
  *
+ * 双端 O(1) 的 pop 和 push 操作，实际的复杂度是与 ziplist 的内存使用量有关
  * ----------------------------------------------------------------------------
  *
  * ZIPLIST OVERALL LAYOUT:
@@ -15,13 +25,19 @@
  * <zlbytes> is an unsigned integer to hold the number of bytes that the
  * ziplist occupies. This value needs to be stored to be able to resize the
  * entire structure without the need to traverse it first.
- *
+ * 
+ * ziplist 内存字节数
+ * 
  * <zltail> is the offset to the last entry in the list. This allows a pop
  * operation on the far side of the list without the need for full traversal.
+ * 
+ * ziplist 的尾部内存地址
  *
  * <zllen> is the number of entries.When this value is larger than 2**16-2,
  * we need to traverse the entire list to know how many items it holds.
  *
+ * entries 的尺寸
+ * 
  * <zlend> is a single byte special value, equal to 255, which indicates the
  * end of the list.
  *
