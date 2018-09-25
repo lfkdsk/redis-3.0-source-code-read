@@ -50,6 +50,8 @@ robj *createObject(int type, void *ptr) {
 
 /* Create a string object with encoding REDIS_ENCODING_RAW, that is a plain
  * string object where o->ptr points to a proper sds string. */
+// 创建一个 REDIS_ENCODING_RAW 编码的字符对象
+// 对象的指针指向一个 sds 结构
 robj *createRawStringObject(char *ptr, size_t len) {
     return createObject(REDIS_STRING,sdsnewlen(ptr,len));
 }
@@ -57,6 +59,7 @@ robj *createRawStringObject(char *ptr, size_t len) {
 /* Create a string object with encoding REDIS_ENCODING_EMBSTR, that is
  * an object where the sds string is actually an unmodifiable string
  * allocated in the same chunk as the object itself. */
+// 创建 embedded string 类型的字符串
 robj *createEmbeddedStringObject(char *ptr, size_t len) {
     robj *o = zmalloc(sizeof(robj)+sizeof(struct sdshdr)+len+1);
     struct sdshdr *sh = (void*)(o+1);
@@ -84,6 +87,7 @@ robj *createEmbeddedStringObject(char *ptr, size_t len) {
  *
  * The current limit of 39 is chosen so that the biggest string object
  * we allocate as EMBSTR will still fit into the 64 byte arena of jemalloc. */
+// REDIS_ENCODING_EMBSTR_SIZE_LIMIT 是 embedded 和 raw 之间的阈值
 #define REDIS_ENCODING_EMBSTR_SIZE_LIMIT 39
 robj *createStringObject(char *ptr, size_t len) {
     if (len <= REDIS_ENCODING_EMBSTR_SIZE_LIMIT)
@@ -135,8 +139,11 @@ robj *createStringObjectFromLongDouble(long double value, int humanfriendly) {
          * way that is "non surprising" for the user (that is, most small
          * decimal numbers will be represented in a way that when converted
          * back into a string are exactly the same as what the user typed.) */
+        // 使用 17 位小数精度，这种精度可以在大部分机器上被 rounding 而不改变
         len = snprintf(buf,sizeof(buf),"%.17Lf", value);
         /* Now remove trailing zeroes after the '.' */
+
+        // 移除尾部的字符 0 
         if (strchr(buf,'.') != NULL) {
             char *p = buf+len-1;
             while(*p == '0') {
@@ -159,6 +166,7 @@ robj *createStringObjectFromLongDouble(long double value, int humanfriendly) {
  * will always result in a fresh object that is unshared (refcount == 1).
  *
  * The resulting object always has refcount set to 1. */
+// redis 使用 ref_count 引用计数的方式对这些进行管理
 robj *dupStringObject(robj *o) {
     robj *d;
 
@@ -297,10 +305,12 @@ void freeHashObject(robj *o) {
     }
 }
 
+// 增加一个 redis object 的引用计数
 void incrRefCount(robj *o) {
     o->refcount++;
 }
 
+// 减少一个 redis object 的引用计数
 void decrRefCount(robj *o) {
     if (o->refcount <= 0) redisPanic("decrRefCount against refcount <= 0");
     if (o->refcount == 1) {
