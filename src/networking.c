@@ -52,6 +52,9 @@ size_t getStringObjectSdsUsedMemory(robj *o) {
     }
 }
 
+/*
+ * 回复内容复制函数
+ */
 void *dupClientReplyValue(void *o) {
     incrRefCount((robj*)o);
     return o;
